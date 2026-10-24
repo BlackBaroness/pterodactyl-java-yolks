@@ -8,9 +8,14 @@ engine=${CONTAINER_ENGINE:-docker}
 test_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 # Verify the account lookup used by Paper/Leaf, including with a read-only root.
-for runtime_user in container 1000:1000; do
+runtime_options=()
+if [[ "$engine" == podman ]]; then
+    runtime_options+=(--passwd=false)
+fi
+for runtime_user in container 1000:1000 999:987; do
     # shellcheck disable=SC2016 # The script expands inside the container.
-    "$engine" run --rm -i --platform "$platform" --read-only --user "$runtime_user" \
+    "$engine" run --rm -i --platform "$platform" "${runtime_options[@]}" \
+    --read-only --user "$runtime_user" --cap-drop=all --security-opt=no-new-privileges \
     --tmpfs /tmp:rw,exec,mode=1777 \
     --tmpfs /home/container:rw,mode=1777 \
     --entrypoint /bin/bash \

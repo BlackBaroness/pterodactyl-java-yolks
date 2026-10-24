@@ -47,6 +47,10 @@ argument expansion convention and is trusted administrator input.
 Wings overrides UID/GID from its configuration. That UID must have an entry in
 the image's `/etc/passwd`: Java 27 `UnixSystem` account lookups used by Paper/Leaf
 fail for unknown UIDs. No runtime NSS workaround or writable `/etc` is used.
+An additional non-login `wings` account maps UID **999** to GID **987**, matching
+the hosting environment this image targets. This leaves the upstream `container`
+account unchanged and allows Java 27 to resolve the user when Wings runs as
+`999:987`. Smoke tests cover both accounts and UID 1000 with a read-only root.
 
 ## spark async-profiler
 

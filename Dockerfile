@@ -9,6 +9,9 @@ RUN apt-get update \
         lsof curl ca-certificates openssl git tar sqlite3 fontconfig libfreetype6 \
         tzdata iproute2 libstdc++6 libasound2t64 libxi6 libxrender1 libxtst6 \
     && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 987 wings \
+    && useradd --system --uid 999 --gid 987 --no-create-home \
+        --home-dir /home/container --shell /usr/sbin/nologin wings \
     && useradd --create-home --home-dir /home/container container
 
 COPY --chmod=755 java/entrypoint.sh /entrypoint.sh
