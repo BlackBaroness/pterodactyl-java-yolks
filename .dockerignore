@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!java/
+!java/entrypoint.sh

@@ -23,11 +23,10 @@
 #
 
 # Default the TZ environment variable to UTC.
-TZ=${TZ:-UTC}
-export TZ
+export TZ=${TZ:-UTC}
 
 # Set environment variable that holds the Internal Docker IP
-INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
+INTERNAL_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<NF;i++) if ($i=="src") {print $(i+1); exit}}')
 export INTERNAL_IP
 
 # Switch to the container's working directory
@@ -35,15 +34,21 @@ cd /home/container || exit 1
 
 # Print Java version
 printf "\033[1m\033[33mcontainer@pterodactyl~ \033[0mjava -version\n"
-java -version
+java -version || exit $?
 
-# Convert all of the "{{VARIABLE}}" parts of the command into the expected shell
-# variable format of "${VARIABLE}" before evaluating the string and automatically
-# replacing the values.
-PARSED=$(echo "${STARTUP}" | sed -e 's/{{/${/g' -e 's/}}/}/g' | eval echo "$(cat -)")
+# Expand panel placeholders once, preserving shell quoting in STARTUP.
+# STARTUP is a trusted shell command configured by the server administrator.
+startup=${STARTUP:?STARTUP must contain the server command}
+PARSED=''
+while [[ "$startup" =~ \{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\} ]]; do
+	placeholder=${BASH_REMATCH[0]}
+	variable=${BASH_REMATCH[1]}
+	PARSED+="${startup%%"$placeholder"*}${!variable}"
+	startup=${startup#*"$placeholder"}
+done
+PARSED+=$startup
 
 # Display the command we're running in the output, and then execute it with the env
 # from the container itself.
 printf "\033[1m\033[33mcontainer@pterodactyl~ \033[0m%s\n" "$PARSED"
-# shellcheck disable=SC2086
-exec env ${PARSED}
+exec /bin/bash -c "exec ${PARSED}"
