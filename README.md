@@ -13,6 +13,11 @@ contain the complete official Temurin HotSpot JDK, including its native symbols,
 `javac`, `jcmd` and `jfr`, but no bundled server. No JVM tuning flags are
 forced; set the startup command and memory/GC options in the panel.
 
+The complete JDK is copied from the standard `eclipse-temurin:25` or
+`eclipse-temurin:27` image. Its default OS can change without changing the final
+Debian base or our package names. Weekly builds pull fresh Temurin and Debian
+images; smoke tests check native library dependencies before publishing.
+
 ## Build and updates
 
 GitHub Actions builds and publishes both versions on demand (`workflow_dispatch`)

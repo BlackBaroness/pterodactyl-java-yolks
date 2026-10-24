@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG JAVA_VERSION=25
-FROM eclipse-temurin:${JAVA_VERSION}-jdk-ubi10-minimal AS temurin
+FROM eclipse-temurin:${JAVA_VERSION} AS temurin
 
 FROM debian:trixie-slim
 
@@ -21,7 +21,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --uid 1000 --user-group --create-home --home-dir /home/container container
 
-# Keep the complete JDK, including diagnostic tools and HotSpot symbols.
+# Follow the standard Temurin JDK tag while keeping OS packages on Debian.
 COPY --from=temurin /opt/java/openjdk /opt/java/openjdk
 COPY --chmod=755 java/entrypoint.sh /entrypoint.sh
 
