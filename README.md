@@ -1,6 +1,7 @@
 # Pterodactyl Temurin images
 
-Only Eclipse Temurin **25** and **27**, based on **Debian 13 (trixie-slim)**,
+Only Eclipse Temurin **25** and **27**, following the
+[official Pterodactyl Java yolks](https://github.com/pterodactyl/yolks/tree/master/java),
 for modern Minecraft servers, primarily Leaf 26.2+.
 
 | Java | Image | Platforms |
@@ -13,10 +14,11 @@ contain the complete official Temurin HotSpot JDK, including its native symbols,
 `javac`, `jcmd` and `jfr`, but no bundled server. No JVM tuning flags are
 forced; set the startup command and memory/GC options in the panel.
 
-The complete JDK is copied from the standard `eclipse-temurin:25` or
-`eclipse-temurin:27` image. Its default OS can change without changing the final
-Debian base or our package names. Weekly builds pull fresh Temurin and Debian
-images; smoke tests check native library dependencies before publishing.
+The base is the standard `eclipse-temurin:25` or `eclipse-temurin:27` image.
+The JDK, OS and certificate entrypoint stay together as maintained by Adoptium.
+The runtime utilities and startup script follow upstream yolks; package installs
+use `--no-install-recommends` and remove APT indexes. Native AWT/audio dependencies
+are also included. Weekly builds pull fresh base images and test both versions.
 
 ## Build and updates
 
@@ -35,10 +37,16 @@ docker run --rm -e 'STARTUP=java -version' java-yolk:25
 bash tests/smoke.sh java-yolk:25 25
 ```
 
-Use `JAVA_VERSION=27` for the other image. The default is 25. The container runs
-as UID/GID 1000 in `/home/container`, supports Pterodactyl `{{VARIABLE}}` startup
-placeholders, shell quoting, `TZ` and `INTERNAL_IP`, and forwards stop signals to
-the server process. Shell syntax in `STARTUP` is trusted administrator input.
+Use `JAVA_VERSION=27` for the other image. The default is 25. As in upstream yolks,
+`useradd` creates `container` with the next available UID/GID; IDs are not forced.
+The working directory is `/home/container`. The startup script supports
+Pterodactyl `{{VARIABLE}}` placeholders, `TZ` and `INTERNAL_IP`, and executes the
+server directly to receive stop signals. `STARTUP` uses the upstream yolks
+argument expansion convention and is trusted administrator input.
+
+Wings overrides UID/GID from its configuration. That UID must have an entry in
+the image's `/etc/passwd`: Java 27 `UnixSystem` account lookups used by Paper/Leaf
+fail for unknown UIDs. No runtime NSS workaround or writable `/etc` is used.
 
 ## spark async-profiler
 
